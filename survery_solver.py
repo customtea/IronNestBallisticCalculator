@@ -3,7 +3,7 @@ from grid_coordinate import GridCoordinate
 
 
 class SurveySolver:
-    """Grid Survery Calcuration"""
+    """Grid Survery Calculation"""
 
     METER_PER_KM = 1000
 
@@ -14,7 +14,7 @@ class SurveySolver:
         angle_deg: float,
         distance_km: float,
     ) -> GridCoordinate:
-        """Calcurate Position from Angle and Distance of Position1
+        """Calculate Position from Angle and Distance of Position1
 
         :param point: Reference Position
         :type point: GridCoordinate
@@ -46,7 +46,7 @@ class SurveySolver:
         point_b: GridCoordinate,
         angle_b: float,
     ) -> GridCoordinate:
-        """Calcurate Position from Two Angles
+        """Calculate Position from Two Angles
 
         :param point_a: Reference Point A
         :type point_a: GridCoordinate
@@ -94,7 +94,7 @@ class SurveySolver:
         point_b: GridCoordinate,
         distance_b_km: float,
     ) -> list[GridCoordinate]:
-        """Calcurate Position from Two Distances
+        """Calculate Position from Two Distances
 
         :param point_a: Reference Position A
         :type point_a: GridCoordinate
@@ -171,7 +171,7 @@ class SurveySolver:
         point_b: GridCoordinate,
         distance_b_km: float,
     ) -> list[GridCoordinate]:
-        """Calcurate Position from One Angle One Distance
+        """Calculate Position from One Angle One Distance
 
         :param point_a: Refernce Position A
         :type point_a: GridCoordinate
@@ -237,7 +237,7 @@ class SurveySolver:
         point_from: GridCoordinate,
         point_to: GridCoordinate,
     ) -> tuple[float, float]:
-        """Calcurate Angle and Distance from Two Position
+        """Calculate Angle and Distance from Two Position
 
         :param point_from: Source Position
         :type point_from: GridCoordinate
@@ -259,7 +259,7 @@ class SurveySolver:
         point_from: GridCoordinate,
         point_to: GridCoordinate,
     ) -> float:
-        """Calcurate Distance from Two Position
+        """Calculate Distance from Two Position
 
         :param point_from: Source Position
         :type point_from: GridCoordinate
