@@ -121,9 +121,7 @@ class CommandRegistry:
             print(node.helptext)
             return
 
-        for c in self.__commands_list:
-            print(c, end="    ")
-        print("")
+        print("    ".join(self.__commands_list))
 
 
 @dataclass
@@ -135,6 +133,7 @@ class PointDatum:
 class Context:
     def __init__(self):
         self.ironnest = IronNestBallisticCalc()
+        self.ironnest.setpos(GridCoordinate.from_xy(0,0))
         self.pointdata: dict[str, PointDatum] = {}
 
 
@@ -173,6 +172,8 @@ class IronNestShell(cmd.Cmd):
     # def complete(self, text, line, begidx, endidx):
     #     parents = shlex.split(line[:begidx])
     #     return registry.complete(parents, text)
+    def complete(self, text, state):
+        pass
     def completedefault(self, *ignored: Any) -> list[str]:
         return super().completedefault(*ignored)
 
@@ -236,7 +237,7 @@ def do_fire(shell: IronNestShell, argv:list[str]):
     # print(f"<AZIMUTH > {azimuth}")
     # print(f"<CHARGE  > {charge}")
     # print(f"<ANGLE   > {angle}")
-    print(f"Target:{name:<5}    POINT:{pos.to_grid()}    DISTANCE:{p_distance:05.2f}    Charge:{charge}    ElevAngle:{p_angle:05.2f}    Azimuth:{p_azimuth:04.1f}")
+    print(f"Target:{name:<5}    POINT:{pos.to_grid()}    DISTANCE:{p_distance:05.2f}    Charge:{charge}    ElevAngle:{p_angle:05.2f}    Azimuth:{p_azimuth:05.1f}")
 
 
 @registry.command("dfire", "<PointName1> <PointName2>", "Calculate Aziuth, Elevation, Charge to Two PointName. For Double Cannon")
@@ -268,7 +269,7 @@ def double_fire(shell: IronNestShell, argv:list[str]):
     p_distance = Decimal(str(distance)).quantize(Decimal("0.01"), ROUND_HALF_UP)
     p_angle = Decimal(str(angle)).quantize(Decimal("0.01"), ROUND_HALF_UP)
     p_azimuth = Decimal(str(azimuth)).quantize(Decimal("0.1"), ROUND_HALF_UP)
-    print(f"RIGHT CANNON:    Target:{name1:<5}    POINT:{pos.to_grid()}    DISTANCE:{p_distance:05.2f}    Charge:{charge}    ElevAngle:{p_angle:05.2f}    Azimuth:{p_azimuth:04.1f}")
+    print(f"RIGHT CANNON:    Target:{name2:<5}    POINT:{pos.to_grid()}    DISTANCE:{p_distance:05.2f}    Charge:{charge}    ElevAngle:{p_angle:05.2f}    Azimuth:{p_azimuth:04.1f}")
 
 @registry.command("afire", "", "Calculate Aziuth, Elevation, Charge for Registerd All Position")
 def fire_list(shell: IronNestShell, argv:list[str]):
@@ -415,7 +416,7 @@ def task_uncheck(shell: IronNestShell, argv:list[str]):
 
 
 
-@registry.command("two a", "<PointName1> <Angle1> <PointName2> <Angle2>", "Calculate Position from Two Position and Angle")
+@registry.command("two a", "<NewPointName> <PointName1> <Angle1> <PointName2> <Angle2>", "Calculate Position from Two Position and Angle")
 def two_angles(shell: IronNestShell, argv:list[str]):
     if len(argv) < 5:
         print("Not Enough arguments")
@@ -438,7 +439,7 @@ def two_angles(shell: IronNestShell, argv:list[str]):
     shell.context.pointdata[name] = PointDatum(r, False)
     print(f"{name} : {r.to_grid()}")
 
-@registry.command("two d", "<PointName1> <Distance1> <PointName2> <Distance2>", "Calculate Position from Two Position and Distance")
+@registry.command("two d", "<NewPointName> <PointName1> <Distance1> <PointName2> <Distance2>", "Calculate Position from Two Position and Distance")
 def two_distances(shell: IronNestShell, argv:list[str]):
     if len(argv) < 5:
         print("Not Enough arguments")
@@ -465,7 +466,7 @@ def two_distances(shell: IronNestShell, argv:list[str]):
         shell.context.pointdata[f"{name}-{i+1}"] = PointDatum(t, False)
         print(f"{name}-{i+1} : {t.to_grid()}")
 
-@registry.command("two ad", "<PointName1> <Angle1> <PointName2> <Distance2>", "Calculate Position from Two Positon and Angle, Distance")
+@registry.command("two ad", "<NewPointName> <PointName1> <Angle1> <PointName2> <Distance2>", "Calculate Position from Two Positon and Angle, Distance")
 def two_angle_distance(shell: IronNestShell, argv:list[str]):
     if len(argv) < 5:
         print("Not Enough arguments")
@@ -492,7 +493,7 @@ def two_angle_distance(shell: IronNestShell, argv:list[str]):
         shell.context.pointdata[f"{name}-{i+1}"] = PointDatum(t, False)
         print(f"{name}-{i+1} : {t.to_grid()}")
 
-@registry.command("one", "<PointName> <Angle> <Distance>", "Calculate Position from One Position and Angle, Distance")
+@registry.command("one", "<NewPointName> <PointName> <Angle> <Distance>", "Calculate Position from One Position and Angle, Distance")
 def one_angle_distance(shell: IronNestShell, argv:list[str]):
     if len(argv) < 4:
         print("Not Enough arguments")
