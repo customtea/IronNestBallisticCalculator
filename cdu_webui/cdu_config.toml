@@ -1,0 +1,186 @@
+# ============================================================
+#  IronNest CDU 設定ファイル  (generate_cdu.py で cdu.html を生成)
+# ============================================================
+#
+# 【キー(ボタン)定義の共通項目】 fnkeys / pages.keys どちらも同じ書式
+#   action  : command | page | back | repeat | exec | prev | next   (どこでも使える)
+#             field | submit | reset                                  (ページ内ラインキー専用 = 入力フォーム用)
+#             省略時は command があれば "command"、page があれば "page"
+#   label   : 表示名。command / submit / reset / back では省略可。fnkeys は "\n" で改行可
+#   color   : w白 g緑 c水 m紫 a琥珀 r赤   (既定 w)
+#   slot    : (ラインキーのみ) L1〜L6 / R1〜R6
+#   hint    : (ラインキーのみ) ラベル行に出る小さな引数ヒント
+#   arrow   : (ラインキーのみ) L側は "<"、R側は ">" を自動付与 (既定 true)
+#
+# 【action = command】 サーバへ送るコマンド
+#   command : コマンド文字列
+#   args    : none = 押すと即実行
+#             opt  = 任意引数。スクラッチパッドに入力があれば引数にして実行
+#             req  = 必須引数。入力済みなら「コマンド+入力」を実行、空なら雛形をスクラッチパッドへ
+#
+# 【action = page / back】 page = 指定ページへ移動 (page = "ページID")、back = 直前にコマンドを出したページへ戻る
+#
+# 【入力フォーム】 複数の値が要るコマンドは、ページ内に field を並べて submit で送る
+#   field  : 入力欄。 name(必須・英数字/_)  label(見出し)  len(未入力時の□の数 既定5)  color(入力済みの色 既定g)
+#            スクラッチパッドに入力して押す = 値をセット / スクラッチパッドが空で押す = 値をスクラッチパッドに呼び戻して編集
+#   submit : command のテンプレートに {name} で field の値を埋めて送信。未入力があれば "NEED xxx" を表示
+#            clear = true で送信後に入力値を消去
+#   reset  : このページの入力値を全て消去
+
+home        = "main"     # 起動時に表示するページ
+result_page = "output"   # コマンド実行結果を表示するページ (type="output" 必須)
+
+# ---- ページボタン(ファンクションキー): 左上から順に並ぶ ----
+fnkeys = [
+  { label = "MENU",         page = "main" },
+  { label = "POS\nADD",     page = "pos_add" },
+  { label = "ONE",          page = "one" },
+  { label = "TWO\nA",       page = "two_a" },
+  { label = "TWO\nD",       page = "two_d" },
+  { label = "POS\nLIST",    command = "pos list" },
+  { label = "TASK\nLIST",   command = "task list" },
+  { label = "MYPOS",        command = "mypos get" },
+  { label = "AFIRE",        command = "afire" },
+  { label = "HELP",         command = "help", args = "opt" },
+  { label = "FIRE",         command = "fire",  args = "req" },
+  { label = "DFIRE",        command = "dfire", args = "req" },
+  { label = "EXEC",         action = "exec" },
+  { label = "PREV\nPAGE",   action = "prev" },
+  { label = "NEXT\nPAGE",   action = "next" },
+]
+
+[server]
+endpoint   = "/api/command"
+timeout_ms = 15000
+
+[ui]
+title      = "IronNest CDU"
+fn_columns = 5
+
+# ============================================================
+#  ページ定義
+#   id    : ページID (一意)
+#   type  : menu(ライン6行。メニューにも入力フォームにも使う) | output(コマンド結果表示。キーは L6 / R6 のみ使用)
+#   title : 画面上部のタイトル
+#   group : 同じ group のページは PREV/NEXT PAGE で巡回し、"1/2" のようにページ番号が出る (省略時は単独)
+#   keys  : ラインキー定義
+# ============================================================
+
+# ---------- メニュー ----------
+[[pages]]
+id    = "main"
+type  = "menu"
+title = "IRONNEST"
+group = "menu"
+keys = [
+  { slot = "L1", label = "POS ADD", page = "pos_add", hint = "NAME GRID" },
+  { slot = "R1", label = "ONE",     page = "one",     hint = "NEW P ANG DIST" },
+  { slot = "L2", label = "TWO A",   page = "two_a",   hint = "2 POINTS+ANGLE" },
+  { slot = "R2", label = "TWO D",   page = "two_d",   hint = "2 POINTS+DIST" },
+  { slot = "L3", label = "TWO AD",  page = "two_ad",  hint = "ANGLE+DIST" },
+  { slot = "R3", command = "mypos set", args = "req", hint = "GRID" },
+  { slot = "L4", command = "fire",   args = "req", hint = "NAME" },
+  { slot = "R4", command = "dfire",  args = "req", hint = "NAME1 NAME2" },
+  { slot = "L5", command = "afire" },
+  { slot = "R5", command = "mypos get" },
+  { slot = "L6", command = "pos list" },
+  { slot = "R6", command = "task list" },
+]
+
+[[pages]]
+id    = "menu2"
+type  = "menu"
+title = "IRONNEST"
+group = "menu"
+keys = [
+  { slot = "L1", command = "pos get",    args = "req", hint = "NAME" },
+  { slot = "R1", command = "pos del",    args = "req", hint = "NAME" },
+  { slot = "L2", command = "pos rename", args = "req", hint = "OLD NEW" },
+  { slot = "R2", command = "task flag",  args = "req", hint = "NAME" },
+  { slot = "L3", command = "task uflag", args = "req", hint = "NAME" },
+  { slot = "R3", command = "help",       args = "opt", hint = "CMD" },
+  { slot = "L4", command = "help --all" },
+  { slot = "R4", command = "exit", color = "a" },
+]
+
+# ---------- 入力フォーム ----------
+[[pages]]
+id    = "pos_add"
+type  = "menu"
+title = "POS ADD"
+keys = [
+  { slot = "L1", action = "field", name = "name", label = "NAME",  len = 5 },
+  { slot = "L2", action = "field", name = "grid", label = "GRID",  len = 6 },
+  { slot = "L5", action = "reset" },
+  { slot = "L6", label = "MENU", page = "main" },
+  { slot = "R6", action = "submit", command = "pos add {name} {grid}" },
+]
+
+[[pages]]
+id    = "one"
+type  = "menu"
+title = "ONE POINT"
+keys = [
+  { slot = "L1", action = "field", name = "new",  label = "NEW NAME",   len = 5 },
+  { slot = "L2", action = "field", name = "p",    label = "BASE POINT", len = 5 },
+  { slot = "R2", action = "field", name = "ang",  label = "ANGLE",      len = 6 },
+  { slot = "L3", action = "field", name = "dist", label = "DISTANCE",   len = 6 },
+  { slot = "L5", action = "reset" },
+  { slot = "L6", label = "MENU", page = "main" },
+  { slot = "R6", action = "submit", command = "one {new} {p} {ang} {dist}" },
+]
+
+[[pages]]
+id    = "two_a"
+type  = "menu"
+title = "TWO ANGLES"
+keys = [
+  { slot = "L1", action = "field", name = "new", label = "NEW NAME", len = 5 },
+  { slot = "L2", action = "field", name = "p1",  label = "POINT 1",  len = 5 },
+  { slot = "R2", action = "field", name = "a1",  label = "ANGLE 1",  len = 6 },
+  { slot = "L3", action = "field", name = "p2",  label = "POINT 2",  len = 5 },
+  { slot = "R3", action = "field", name = "a2",  label = "ANGLE 2",  len = 6 },
+  { slot = "L5", action = "reset" },
+  { slot = "L6", label = "MENU", page = "main" },
+  { slot = "R6", action = "submit", command = "two a {new} {p1} {a1} {p2} {a2}" },
+]
+
+[[pages]]
+id    = "two_d"
+type  = "menu"
+title = "TWO DISTANCES"
+keys = [
+  { slot = "L1", action = "field", name = "new", label = "NEW NAME", len = 5 },
+  { slot = "L2", action = "field", name = "p1",  label = "POINT 1",  len = 5 },
+  { slot = "R2", action = "field", name = "d1",  label = "DIST 1",   len = 6 },
+  { slot = "L3", action = "field", name = "p2",  label = "POINT 2",  len = 5 },
+  { slot = "R3", action = "field", name = "d2",  label = "DIST 2",   len = 6 },
+  { slot = "L5", action = "reset" },
+  { slot = "L6", label = "MENU", page = "main" },
+  { slot = "R6", action = "submit", command = "two d {new} {p1} {d1} {p2} {d2}" },
+]
+
+[[pages]]
+id    = "two_ad"
+type  = "menu"
+title = "ANGLE + DIST"
+keys = [
+  { slot = "L1", action = "field", name = "new", label = "NEW NAME", len = 5 },
+  { slot = "L2", action = "field", name = "p1",  label = "POINT 1",  len = 5 },
+  { slot = "R2", action = "field", name = "a1",  label = "ANGLE 1",  len = 6 },
+  { slot = "L3", action = "field", name = "p2",  label = "POINT 2",  len = 5 },
+  { slot = "R3", action = "field", name = "d2",  label = "DIST 2",   len = 6 },
+  { slot = "L5", action = "reset" },
+  { slot = "L6", label = "MENU", page = "main" },
+  { slot = "R6", action = "submit", command = "two ad {new} {p1} {a1} {p2} {d2}" },
+]
+
+# ---------- コマンド結果 ----------
+[[pages]]
+id    = "output"
+type  = "output"
+title = "RESULT"
+keys = [
+  { slot = "L6", action = "back" },
+  { slot = "R6", label = "REPEAT", action = "repeat" },
+]

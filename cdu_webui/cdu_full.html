@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2b2d2f">
+<title>IronNest CDU</title>
+<style>
+:root{
+  --page:#16171a; --bezel:#2b2d2f; --bezel-hi:#3a3d40; --key:#d9d6cc; --key-txt:#1b1b1a; --key-edge:#9d998f;
+  --lcd:#050706; --w:#f2f2ee; --g:#4cf06a; --c:#4fd8ff; --m:#ff6bd6; --a:#ffb347; --r:#ff6b6b;
+  --fs:17px; --ls:.1em; --kfs:14px; --fkfs:12px; --lfs:11px;
+  --lskw:clamp(34px,7vmin,72px); --gap:clamp(4px,1vmin,12px);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{background:var(--page);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+
+/* 画面全体に敷き詰める。縦長は上下、横長は左右に分割 */
+.cdu{position:fixed;display:flex;flex-direction:column;gap:var(--gap);padding:clamp(8px,1.8vmin,24px);
+  inset:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+  background:linear-gradient(180deg,var(--bezel-hi),var(--bezel));border-radius:clamp(10px,2vmin,26px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.cdu.land{flex-direction:row}
+.left{display:flex;flex-direction:column;min-height:0;min-width:0;flex:1 1 58%}
+.cdu.land .left{flex:0 0 54%}
+.keys{flex:1 1 42%;min-height:0;min-width:0;display:flex;flex-direction:column;gap:var(--gap)}
+
+.lamps{flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 6px var(--gap);
+  font:600 clamp(9px,1.5vmin,14px)/1 ui-monospace,Menlo,monospace;color:#8b8e92}
+.lamp{display:flex;align-items:center;gap:5px}
+.lamp i{width:1.4em;height:.6em;border-radius:2px;background:#444;display:block}
+.lamp.on{color:var(--a)}
+.lamp.on i{background:var(--a);box-shadow:0 0 6px var(--a)}
+.fsb{display:none;border:0;background:transparent;color:#8b8e92;font-size:1.6em;line-height:1;cursor:pointer;padding:0 4px}
+
+.disp{flex:1;min-height:0;display:grid;grid-template-columns:var(--lskw) minmax(0,1fr) var(--lskw);gap:var(--gap)}
+.lsk{display:grid;grid-template-rows:repeat(14,minmax(0,1fr));padding:2px 0;min-height:0}
+.lsk button{align-self:center;height:70%;margin:0 6%;min-width:0;padding:0;border:0;border-radius:clamp(3px,.7vmin,8px);
+  background:var(--key);box-shadow:0 clamp(2px,.4vmin,4px) 0 var(--key-edge);cursor:pointer;color:var(--key-txt);
+  font:600 var(--lfs) ui-monospace,monospace}
+.lsk button:active,.k:active{transform:translateY(2px);box-shadow:none}
+.screen{min-height:0;min-width:0;background:var(--lcd);border-radius:6px;border:2px solid #111;box-shadow:inset 0 0 14px #000;
+  font-family:"Roboto Mono","SFMono-Regular",Menlo,Consolas,"Courier New",monospace;font-size:var(--fs);letter-spacing:var(--ls);
+  display:grid;grid-template-rows:repeat(14,minmax(0,1fr));padding:0 6px;overflow:hidden}
+.ln{display:flex;justify-content:space-between;align-items:center;white-space:pre;min-width:0;min-height:0;overflow:hidden}
+.ln>span:last-child{margin-right:calc(var(--ls)*-1)}
+.ln.title{justify-content:center;position:relative}
+.ln.title .pg{position:absolute;right:0}
+.ln.lab{font-size:.68em;align-items:flex-end;padding-bottom:1px}
+.ln.txt{justify-content:flex-start}
+.w{color:var(--w)}.g{color:var(--g)}.c{color:var(--c)}.m{color:var(--m)}.a{color:var(--a)}.r{color:var(--r)}
+.sm{font-size:.78em}
+.cur{display:inline-block;width:.6em;height:1em;background:var(--w);margin-left:1px;animation:bl 1s steps(1) infinite;vertical-align:-.12em}
+@keyframes bl{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.cur{animation:none}}
+
+.fn,.alpha{display:grid;gap:var(--gap);min-height:0}
+.fn{flex:3 1 0}
+.alpha{flex:6 1 0;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr))}
+.k{min-width:0;min-height:0;padding:0;border:0;border-radius:clamp(4px,.9vmin,10px);background:var(--key);color:var(--key-txt);
+  box-shadow:0 clamp(2px,.4vmin,4px) 0 var(--key-edge);font:600 var(--kfs)/1.1 ui-monospace,Menlo,monospace;cursor:pointer;text-align:center}
+.k:focus-visible,.lsk button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+.k.fnk{background:#c9c6bb;font-size:var(--fkfs)}
+.k.exec{position:relative}
+.k.exec::after{content:"";position:absolute;top:8%;left:25%;right:25%;height:7%;min-height:3px;border-radius:2px;background:#555}
+.k.exec.lit::after{background:var(--g);box-shadow:0 0 8px var(--g)}
+.k.num{background:#ece9df;font-size:calc(var(--kfs)*1.2)}
+.k.span3{grid-column:span 3}
+.k.clr{background:#c9c6bb}
+</style>
+</head>
+<body>
+<div class="cdu" id="cdu">
+  <div class="left">
+    <div class="lamps">
+      <span class="lamp" id="lDSPY"><i></i>DSPY</span>
+      <span class="lamp" id="lMSG"><i></i>MSG</span>
+      <span class="lamp" id="lCASE"><i></i><b id="caseTxt">abc</b></span>
+      <button class="fsb" id="fsBtn" type="button" aria-label="全画面表示">&#x26F6;</button>
+    </div>
+    <div class="disp">
+      <div class="lsk" id="lskL"></div>
+      <div class="screen" id="screen" aria-live="polite"></div>
+      <div class="lsk" id="lskR"></div>
+    </div>
+  </div>
+  <div class="keys">
+    <div class="fn" id="fn"></div>
+    <div class="alpha" id="alpha"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* このファイルは generate_cdu.py が生成します。直接編集せず、設定(TOML/JSON)かテンプレートを編集してください。
+   サーバ連携:
+     POST endpoint  リクエスト {"line":"fire a1","session":"<ID>"} / レスポンス {"output":"..."} (プレーンテキスト可)
+   file:// で開く or ?mock を付けるとダミー応答で動作確認できます。 */
+const CFG = {
+ "home": "main",
+ "result_page": "output",
+ "server": {
+  "endpoint": "/api/command",
+  "timeout_ms": 15000
+ },
+ "ui": {
+  "title": "IronNest CDU",
+  "fn_columns": 5
+ },
+ "fnkeys": [
+  {
+   "action": "page",
+   "page": "main",
+   "color": "w",
+   "label": "MENU"
+  },
+  {
+   "action": "page",
+   "page": "pos_add",
+   "color": "w",
+   "label": "POS\nADD"
+  },
+  {
+   "action": "page",
+   "page": "one",
+   "color": "w",
+   "label": "ONE"
+  },
+  {
+   "action": "page",
+   "page": "two_a",
+   "color": "w",
+   "label": "TWO\nA"
+  },
+  {
+   "action": "page",
+   "page": "two_d",
+   "color": "w",
+   "label": "TWO\nD"
+  },
+  {
+   "action": "command",
+   "command": "pos list",
+   "args": "none",
+   "color": "w",
+   "label": "POS\nLIST"
+  },
+  {
+   "action": "command",
+   "command": "task list",
+   "args": "none",
+   "color": "w",
+   "label": "TASK\nLIST"
+  },
+  {
+   "action": "command",
+   "command": "mypos get",
+   "args": "none",
+   "color": "w",
+   "label": "MYPOS"
+  },
+  {
+   "action": "command",
+   "command": "afire",
+   "args": "none",
+   "color": "w",
+   "label": "AFIRE"
+  },
+  {
+   "action": "command",
+   "command": "help",
+   "args": "opt",
+   "color": "w",
+   "label": "HELP"
+  },
+  {
+   "action": "command",
+   "command": "fire",
+   "args": "req",
+   "color": "w",
+   "label": "FIRE"
+  },
+  {
+   "action": "command",
+   "command": "dfire",
+   "args": "req",
+   "color": "w",
+   "label": "DFIRE"
+  },
+  {
+   "action": "exec",
+   "color": "w",
+   "label": "EXEC"
+  },
+  {
+   "action": "prev",
+   "color": "w",
+   "label": "PREV\nPAGE"
+  },
+  {
+   "action": "next",
+   "color": "w",
+   "label": "NEXT\nPAGE"
+  }
+ ],
+ "pages": {
+  "main": {
+   "type": "menu",
+   "title": "IRONNEST",
+   "group": "menu",
+   "keys": {
+    "L1": {
+     "action": "page",
+     "page": "pos_add",
+     "color": "w",
+     "hint": "NAME GRID",
+     "label": "<POS ADD"
+    },
+    "R1": {
+     "action": "page",
+     "page": "one",
+     "color": "w",
+     "hint": "NEW P ANG DIST",
+     "label": "ONE>"
+    },
+    "L2": {
+     "action": "page",
+     "page": "two_a",
+     "color": "w",
+     "hint": "2 POINTS+ANGLE",
+     "label": "<TWO A"
+    },
+    "R2": {
+     "action": "page",
+     "page": "two_d",
+     "color": "w",
+     "hint": "2 POINTS+DIST",
+     "label": "TWO D>"
+    },
+    "L3": {
+     "action": "page",
+     "page": "two_ad",
+     "color": "w",
+     "hint": "ANGLE+DIST",
+     "label": "<TWO AD"
+    },
+    "R3": {
+     "action": "command",
+     "command": "mypos set",
+     "args": "req",
+     "color": "w",
+     "hint": "GRID",
+     "label": "MYPOS SET>"
+    },
+    "L4": {
+     "action": "command",
+     "command": "fire",
+     "args": "req",
+     "color": "w",
+     "hint": "NAME",
+     "label": "<FIRE"
+    },
+    "R4": {
+     "action": "command",
+     "command": "dfire",
+     "args": "req",
+     "color": "w",
+     "hint": "NAME1 NAME2",
+     "label": "DFIRE>"
+    },
+    "L5": {
+     "action": "command",
+     "command": "afire",
+     "args": "none",
+     "color": "w",
+     "hint": "",
+     "label": "<AFIRE"
+    },
+    "R5": {
+     "action": "command",
+     "command": "mypos get",
+     "args": "none",
+     "color": "w",
+     "hint": "",
+     "label": "MYPOS GET>"
+    },
+    "L6": {
+     "action": "command",
+     "command": "pos list",
+     "args": "none",
+     "color": "w",
+     "hint": "",
+     "label": "<POS LIST"
+    },
+    "R6": {
+     "action": "command",
+     "command": "task list",
+     "args": "none",
+     "color": "w",
+     "hint": "",
+     "label": "TASK LIST>"
+    }
+   }
+  },
+  "menu2": {
+   "type": "menu",
+   "title": "IRONNEST",
+   "group": "menu",
+   "keys": {
+    "L1": {
+     "action": "command",
+     "command": "pos get",
+     "args": "req",
+     "color": "w",
+     "hint": "NAME",
+     "label": "<POS GET"
+    },
+    "R1": {
+     "action": "command",
+     "command": "pos del",
+     "args": "req",
+     "color": "w",
+     "hint": "NAME",
+     "label": "POS DEL>"
+    },
+    "L2": {
+     "action": "command",
+     "command": "pos rename",
+     "args": "req",
+     "color": "w",
+     "hint": "OLD NEW",
+     "label": "<POS RENAME"
+    },
+    "R2": {
+     "action": "command",
+     "command": "task flag",
+     "args": "req",
+     "color": "w",
+     "hint": "NAME",
+     "label": "TASK FLAG>"
+    },
+    "L3": {
+     "action": "command",
+     "command": "task uflag",
+     "args": "req",
+     "color": "w",
+     "hint": "NAME",
+     "label": "<TASK UFLAG"
+    },
+    "R3": {
+     "action": "command",
+     "command": "help",
+     "args": "opt",
+     "color": "w",
+     "hint": "CMD",
+     "label": "HELP>"
+    },
+    "L4": {
+     "action": "command",
+     "command": "help --all",
+     "args": "none",
+     "color": "w",
+     "hint": "",
+     "label": "<HELP --ALL"
+    },
+    "R4": {
+     "action": "command",
+     "command": "exit",
+     "args": "none",
+     "color": "a",
+     "hint": "",
+     "label": "EXIT>"
+    }
+   }
+  },
+  "pos_add": {
+   "type": "menu",
+   "title": "POS ADD",
+   "group": "pos_add",
+   "keys": {
+    "L1": {
+     "action": "field",
+     "name": "name",
+     "len": 5,
+     "color": "g",
+     "hint": "NAME",
+     "label": "NAME"
+    },
+    "L2": {
+     "action": "field",
+     "name": "grid",
+     "len": 6,
+     "color": "g",
+     "hint": "GRID",
+     "label": "GRID"
+    },
+    "L5": {
+     "action": "reset",
+     "color": "w",
+     "hint": "",
+     "label": "<CLEAR"
+    },
+    "L6": {
+     "action": "page",
+     "page": "main",
+     "color": "w",
+     "hint": "",
+     "label": "<MENU"
+    },
+    "R6": {
+     "action": "submit",
+     "command": "pos add {name} {grid}",
+     "clear": false,
+     "color": "w",
+     "hint": "",
+     "label": "EXEC>"
+    }
+   }
+  },
+  "one": {
+   "type": "menu",
+   "title": "ONE POINT",
+   "group": "one",
+   "keys": {
+    "L1": {
+     "action": "field",
+     "name": "new",
+     "len": 5,
+     "color": "g",
+     "hint": "NEW NAME",
+     "label": "NEW NAME"
+    },
+    "L2": {
+     "action": "field",
+     "name": "p",
+     "len": 5,
+     "color": "g",
+     "hint": "BASE POINT",
+     "label": "BASE POINT"
+    },
+    "R2": {
+     "action": "field",
+     "name": "ang",
+     "len": 6,
+     "color": "g",
+     "hint": "ANGLE",
+     "label": "ANGLE"
+    },
+    "L3": {
+     "action": "field",
+     "name": "dist",
+     "len": 6,
+     "color": "g",
+     "hint": "DISTANCE",
+     "label": "DISTANCE"
+    },
+    "L5": {
+     "action": "reset",
+     "color": "w",
+     "hint": "",
+     "label": "<CLEAR"
+    },
+    "L6": {
+     "action": "page",
+     "page": "main",
+     "color": "w",
+     "hint": "",
+     "label": "<MENU"
+    },
+    "R6": {
+     "action": "submit",
+     "command": "one {new} {p} {ang} {dist}",
+     "clear": false,
+     "color": "w",
+     "hint": "",
+     "label": "EXEC>"
+    }
+   }
+  },
+  "two_a": {
+   "type": "menu",
+   "title": "TWO ANGLES",
+   "group": "two_a",
+   "keys": {
+    "L1": {
+     "action": "field",
+     "name": "new",
+     "len": 5,
+     "color": "g",
+     "hint": "NEW NAME",
+     "label": "NEW NAME"
+    },
+    "L2": {
+     "action": "field",
+     "name": "p1",
+     "len": 5,
+     "color": "g",
+     "hint": "POINT 1",
+     "label": "POINT 1"
+    },
+    "R2": {
+     "action": "field",
+     "name": "a1",
+     "len": 6,
+     "color": "g",
+     "hint": "ANGLE 1",
+     "label": "ANGLE 1"
+    },
+    "L3": {
+     "action": "field",
+     "name": "p2",
+     "len": 5,
+     "color": "g",
+     "hint": "POINT 2",
+     "label": "POINT 2"
+    },
+    "R3": {
+     "action": "field",
+     "name": "a2",
+     "len": 6,
+     "color": "g",
+     "hint": "ANGLE 2",
+     "label": "ANGLE 2"
+    },
+    "L5": {
+     "action": "reset",
+     "color": "w",
+     "hint": "",
+     "label": "<CLEAR"
+    },
+    "L6": {
+     "action": "page",
+     "page": "main",
+     "color": "w",
+     "hint": "",
+     "label": "<MENU"
+    },
+    "R6": {
+     "action": "submit",
+     "command": "two a {new} {p1} {a1} {p2} {a2}",
+     "clear": false,
+     "color": "w",
+     "hint": "",
+     "label": "EXEC>"
+    }
+   }
+  },
+  "two_d": {
+   "type": "menu",
+   "title": "TWO DISTANCES",
+   "group": "two_d",
+   "keys": {
+    "L1": {
+     "action": "field",
+     "name": "new",
+     "len": 5,
+     "color": "g",
+     "hint": "NEW NAME",
+     "label": "NEW NAME"
+    },
+    "L2": {
+     "action": "field",
+     "name": "p1",
+     "len": 5,
+     "color": "g",
+     "hint": "POINT 1",
+     "label": "POINT 1"
+    },
+    "R2": {
+     "action": "field",
+     "name": "d1",
+     "len": 6,
+     "color": "g",
+     "hint": "DIST 1",
+     "label": "DIST 1"
+    },
+    "L3": {
+     "action": "field",
+     "name": "p2",
+     "len": 5,
+     "color": "g",
+     "hint": "POINT 2",
+     "label": "POINT 2"
+    },
+    "R3": {
+     "action": "field",
+     "name": "d2",
+     "len": 6,
+     "color": "g",
+     "hint": "DIST 2",
+     "label": "DIST 2"
+    },
+    "L5": {
+     "action": "reset",
+     "color": "w",
+     "hint": "",
+     "label": "<CLEAR"
+    },
+    "L6": {
+     "action": "page",
+     "page": "main",
+     "color": "w",
+     "hint": "",
+     "label": "<MENU"
+    },
+    "R6": {
+     "action": "submit",
+     "command": "two d {new} {p1} {d1} {p2} {d2}",
+     "clear": false,
+     "color": "w",
+     "hint": "",
+     "label": "EXEC>"
+    }
+   }
+  },
+  "two_ad": {
+   "type": "menu",
+   "title": "ANGLE + DIST",
+   "group": "two_ad",
+   "keys": {
+    "L1": {
+     "action": "field",
+     "name": "new",
+     "len": 5,
+     "color": "g",
+     "hint": "NEW NAME",
+     "label": "NEW NAME"
+    },
+    "L2": {
+     "action": "field",
+     "name": "p1",
+     "len": 5,
+     "color": "g",
+     "hint": "POINT 1",
+     "label": "POINT 1"
+    },
+    "R2": {
+     "action": "field",
+     "name": "a1",
+     "len": 6,
+     "color": "g",
+     "hint": "ANGLE 1",
+     "label": "ANGLE 1"
+    },
+    "L3": {
+     "action": "field",
+     "name": "p2",
+     "len": 5,
+     "color": "g",
+     "hint": "POINT 2",
+     "label": "POINT 2"
+    },
+    "R3": {
+     "action": "field",
+     "name": "d2",
+     "len": 6,
+     "color": "g",
+     "hint": "DIST 2",
+     "label": "DIST 2"
+    },
+    "L5": {
+     "action": "reset",
+     "color": "w",
+     "hint": "",
+     "label": "<CLEAR"
+    },
+    "L6": {
+     "action": "page",
+     "page": "main",
+     "color": "w",
+     "hint": "",
+     "label": "<MENU"
+    },
+    "R6": {
+     "action": "submit",
+     "command": "two ad {new} {p1} {a1} {p2} {d2}",
+     "clear": false,
+     "color": "w",
+     "hint": "",
+     "label": "EXEC>"
+    }
+   }
+  },
+  "output": {
+   "type": "output",
+   "title": "RESULT",
+   "group": "output",
+   "keys": {
+    "L6": {
+     "action": "back",
+     "color": "w",
+     "hint": "",
+     "label": "<BACK"
+    },
+    "R6": {
+     "action": "repeat",
+     "color": "w",
+     "hint": "",
+     "label": "REPEAT>"
+    }
+   }
+  }
+ },
+ "groups": {
+  "menu": [
+   "main",
+   "menu2"
+  ],
+  "pos_add": [
+   "pos_add"
+  ],
+  "one": [
+   "one"
+  ],
+  "two_a": [
+   "two_a"
+  ],
+  "two_d": [
+   "two_d"
+  ],
+  "two_ad": [
+   "two_ad"
+  ],
+  "output": [
+   "output"
+  ]
+ }
+};
+const CONFIG = {
+  endpoint: CFG.server.endpoint,
+  timeoutMs: CFG.server.timeout_ms,
+  mock: location.protocol === "file:" || /[?&]mock/.test(location.search)
+};
+let SESSION; try { SESSION = crypto.randomUUID(); } catch { SESSION = Date.now()+"-"+Math.random().toString(36).slice(2); }
+
+const COLS = 24, PER = 11, MAXLEN = 120;
+const state = {pid:CFG.home, from:"", fields:{}, lines:[], opage:0, cmd:"", scratch:"", msg:"", busy:false, upper:false};
+const hist = []; let hIdx = 0;
+const curPage = () => CFG.pages[state.pid];
+
+/* ---- ANSI -> セル列 ---- */
+const ACOL = {31:"r",32:"g",33:"a",34:"c",35:"m",36:"c",37:"w"};
+function parseAnsi(s){
+  const rows=[[]]; let c="w";
+  s = s.replace(/\r/g,"").replace(/\t/g,"    ");
+  const push = t => { for(const ch of t){ if(ch==="\n") rows.push([]); else rows[rows.length-1].push({ch,c}); } };
+  const re=/\x1b\[([\d;]*)m/g; let last=0,m;
+  while((m=re.exec(s))){
+    push(s.slice(last,m.index));
+    for(const p of (m[1]||"0").split(";")){
+      const n=+p; if(n===0) c="w"; else if(ACOL[n]) c=ACOL[n]; else if(ACOL[n-60]) c=ACOL[n-60];
+    }
+    last=re.lastIndex;
+  }
+  push(s.slice(last));
+  if(rows.length>1 && !rows[rows.length-1].length) rows.pop();
+  return rows;
+}
+function wrap(rows){
+  const out=[];
+  rows.forEach(r=>{
+    let a=r.slice();
+    if(!a.length){ out.push([]); return; }
+    while(a.length>COLS){
+      let cut=COLS;
+      for(let i=COLS;i>=8;i--) if(a[i] && a[i].ch===" "){ cut=i; break; }
+      const atSpace = a[cut] && a[cut].ch===" ";
+      out.push(a.slice(0,cut)); a=a.slice(cut);
+      if(atSpace) while(a[0] && a[0].ch===" ") a.shift();
+    }
+    out.push(a);
+  });
+  return out;
+}
+const toCells = (t,c) => [...t].map(ch=>({ch,c}));
+
+/* ---- 描画 ---- */
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const sp = (t,c) => `<span class="${c||"w"}">${esc(t||" ")}</span>`;
+function lineHTML(cells){
+  let h="",cur=null,buf="";
+  for(const {ch,c} of cells){ if(c!==cur){ if(buf) h+=sp(buf,cur); cur=c; buf=""; } buf+=ch; }
+  return h+(buf?sp(buf,cur):"");
+}
+/* フィールドキー: 値(未入力は□)を表示。それ以外は label */
+const fkey = (k,n) => state.pid+"."+(n||k.name);
+function keyText(k){
+  if(k.action!=="field") return k.label;
+  const v=state.fields[fkey(k)];
+  return v ? (v.length>12 ? v.slice(0,11)+"…" : v) : "□".repeat(k.len);
+}
+const keyColor = k => k.action==="field" && !state.fields[fkey(k)] ? "c" : k.color;
+
+function render(){
+  const s=state, p=curPage(); let h="";
+  if(p.type==="menu"){
+    const grp=CFG.groups[p.group], pg=grp.length>1 ? `${grp.indexOf(s.pid)+1}/${grp.length}` : "";
+    h+=`<div class="ln title">${sp(p.title)}<span class="pg w sm">${pg}</span></div>`;
+    for(let i=1;i<=6;i++){
+      const L=p.keys["L"+i]||{}, R=p.keys["R"+i]||{};
+      h+=`<div class="ln lab">${sp(L.hint,"c")}${sp(R.hint,"c")}</div>`;
+      h+=`<div class="ln">${sp(keyText(L),keyColor(L))}${sp(keyText(R),keyColor(R))}</div>`;
+    }
+  } else {
+    const tot=Math.max(1,Math.ceil(s.lines.length/PER));
+    const title=s.cmd.length>15 ? s.cmd.slice(0,14)+"…" : s.cmd;
+    h+=`<div class="ln title">${sp(title||p.title)}<span class="pg w sm">${s.opage+1}/${tot}</span></div>`;
+    const part=s.lines.slice(s.opage*PER,s.opage*PER+PER);
+    for(let i=0;i<PER;i++) h+=`<div class="ln txt">${part[i]?lineHTML(part[i]):""}</div>`;
+    const L=p.keys.L6||{}, R=p.keys.R6||{};
+    h+=`<div class="ln">${sp(L.label,L.color)}${sp(R.label,R.color)}</div>`;
+  }
+  let sc;
+  if(s.busy) sc=sp("SENDING...","c");
+  else if(s.msg) sc=sp(s.msg,"a");
+  else{
+    const t=s.scratch.length>COLS-1 ? "…"+s.scratch.slice(-(COLS-2)) : s.scratch;
+    sc=(t?sp(t):"")+'<i class="cur"></i>';
+  }
+  h+=`<div class="ln txt">${sc}</div>`;
+  $("screen").innerHTML=h;
+  $("lDSPY").classList.toggle("on",s.busy);
+  $("lMSG").classList.toggle("on",!!s.msg);
+  $("lCASE").classList.toggle("on",s.upper);
+  $("caseTxt").textContent=s.upper?"ABC":"abc";
+  const ex=document.querySelector(".k.exec"); if(ex) ex.classList.toggle("lit",!!s.scratch.trim());
+}
+
+/* ---- サーバ送信 ---- */
+const mock = line => new Promise(r=>setTimeout(()=>r(
+  "\x1b[33m[mock]\x1b[0m "+line+"\n\x1b[32mTarget:a1       DISTANCE:123.45    Charge:2    ElevAngle:45.00    Azimuth:123.4\x1b[0m\n\x1b[31m[ ] a2    : K5 3\x1b[0m\nno server connected"),200));
+
+async function execute(line, keep){
+  line=line.trim(); if(!line) return;
+  if(curPage().type!=="output") state.from=state.pid;   // 結果画面の <BACK 用
+  hist.push(line); hIdx=hist.length;
+  if(!keep) state.scratch="";
+  state.msg=""; state.busy=true; render();
+  let out;
+  try{
+    if(CONFIG.mock) out=await mock(line);
+    else{
+      const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),CONFIG.timeoutMs);
+      const res=await fetch(CONFIG.endpoint,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({line,session:SESSION}),signal:ctl.signal});
+      clearTimeout(to);
+      const txt=await res.text();
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      try{ const j=JSON.parse(txt); out=typeof j==="string"?j:(j.output ?? txt); }catch{ out=txt; }
+    }
+  }catch(e){
+    state.busy=false;
+    state.msg = e.name==="AbortError" ? "SERVER TIMEOUT" : /^HTTP/.test(e.message) ? "SERVER ERROR "+e.message.slice(5) : "NO SERVER RESPONSE";
+    if(!keep) state.scratch=line;     // 再送できるように戻す
+    render(); return;
+  }
+  state.busy=false; state.pid=CFG.result_page; state.cmd=line; state.opage=0;
+  state.lines = String(out).trim() ? wrap(parseAnsi(String(out))) : [toCells("(NO OUTPUT)","g")];
+  render();
+}
+
+/* ---- コマンドショートカット: 引数ありはスクラッチパッドの内容を引数として実行 ---- */
+function shortcut(t,a){
+  const p=state.scratch.trim();
+  if(a==="req"){
+    if(p.toLowerCase().startsWith(t)){ if(p.length>t.length) execute(p); return; }  // 入力済みならそのまま実行
+    if(p) return execute(t+" "+p);
+    state.scratch=t+" "; state.msg=""; return render();                              // 空なら雛形を入れる
+  }
+  if(a==="opt" && p) return execute(t+" "+p);
+  execute(t,true);
+}
+function paging(d){
+  const p=curPage();
+  if(p.type==="menu"){
+    const grp=CFG.groups[p.group];
+    state.pid=grp[(grp.indexOf(state.pid)+d+grp.length)%grp.length];
+  } else {
+    const tot=Math.max(1,Math.ceil(state.lines.length/PER));
+    state.opage=Math.min(tot-1,Math.max(0,state.opage+d));
+  }
+  render();
+}
+function pressExec(){ if(state.scratch.trim()) execute(state.scratch); }
+function doKey(k){
+  if(!k) return;
+  switch(k.action){
+    case "command": return shortcut(k.command,k.args);
+    case "page":    state.pid=k.page; state.msg=""; return render();
+    case "back":    state.pid=state.from||CFG.home; state.msg=""; return render();
+    case "field": {                       // スクラッチパッド -> フィールド / 空ならフィールド -> スクラッチパッド
+      const key=fkey(k), sp=state.scratch.trim();
+      if(sp){ state.fields[key]=sp; state.scratch=""; state.msg=""; }
+      else if(state.fields[key]) state.scratch=state.fields[key];
+      return render();
+    }
+    case "reset":
+      Object.keys(state.fields).forEach(n=>{ if(n.startsWith(state.pid+".")) delete state.fields[n]; });
+      return render();
+    case "submit": {                      // コマンドテンプレートの {name} をフィールド値で置換して送信
+      const missing=[];
+      const line=k.command.replace(/\{(\w+)\}/g,(m,n)=>{
+        const v=(state.fields[fkey(k,n)]||"").trim(); if(!v) missing.push(n.toUpperCase()); return v; });
+      if(missing.length){ state.msg=("NEED "+missing.join(" ")).slice(0,COLS); return render(); }
+      if(k.clear) Object.keys(state.fields).forEach(n=>{ if(n.startsWith(state.pid+".")) delete state.fields[n]; });
+      return execute(line,true);
+    }
+    case "repeat":  return state.cmd && execute(state.cmd,true);
+    case "exec":    return pressExec();
+    case "prev":    return paging(-1);
+    case "next":    return paging(1);
+  }
+}
+
+/* ---- 文字入力 ---- */
+function typeChar(ch){
+  state.msg="";
+  if(state.scratch.length<MAXLEN) state.scratch+=ch;
+  render();
+}
+function clr(all){
+  if(state.msg) state.msg=""; else state.scratch = all ? "" : state.scratch.slice(0,-1);
+  render();
+}
+
+/* ---- キー生成 ---- */
+function mk(parent,html,cls,fn){
+  const b=document.createElement("button");
+  b.type="button"; b.className="k "+(cls||""); b.innerHTML=html;
+  b.addEventListener("click",()=>{fn();b.blur();}); parent.appendChild(b); return b;
+}
+["L","R"].forEach(side=>{
+  const el=$(side==="L"?"lskL":"lskR");
+  for(let i=1;i<=6;i++){
+    const b=document.createElement("button"); b.type="button"; b.textContent=side+i;
+    b.setAttribute("aria-label","LSK "+side+i);
+    b.style.gridRow=`${2+(i-1)*2} / span 2`;      // 画面の行(ラベル+データ)に合わせる
+    b.addEventListener("click",()=>{doKey(curPage().keys[side+i]);b.blur();}); el.appendChild(b);
+  }
+});
+const FN_ROWS=Math.max(1,Math.ceil(CFG.fnkeys.length/CFG.ui.fn_columns));
+$("fn").style.gridTemplateColumns=`repeat(${CFG.ui.fn_columns},minmax(0,1fr))`;
+$("fn").style.gridTemplateRows=`repeat(${FN_ROWS},minmax(0,1fr))`;
+$("fn").style.flexGrow=FN_ROWS;
+CFG.fnkeys.forEach(k=>mk($("fn"),esc(k.label).replace(/\n/g,"<br>"),"fnk"+(k.action==="exec"?" exec":""),()=>doKey(k)));
+
+/* 英数字キー(固定) */
+const letters=[];
+[ "1","2","3","a","b","c","d","e", "4","5","6","f","g","h","i","j", "7","8","9","k","l","m","n","o",
+  ".","0","-","p","q","r","s","t", "SP","DEL","/","u","v","w","x","y" ].forEach(k=>{
+  const isL=/^[a-z]$/.test(k), isNum=/^[0-9.\-]$/.test(k);
+  const b=mk($("alpha"),k,isNum?"num":"",()=>{
+    if(k==="SP") typeChar(" ");
+    else if(k==="DEL") clr(true);
+    else typeChar(isL ? (state.upper?k.toUpperCase():k) : k);
+  });
+  if(isL) letters.push([b,k]);
+  if(k==="DEL") b.title="入力中の内容を全消去";
+});
+mk($("alpha"),"CLR","clr span3",()=>clr(false));
+letters.push([mk($("alpha"),"z","",()=>typeChar(state.upper?"Z":"z")),"z"]);
+mk($("alpha"),"a/A","",()=>{
+  state.upper=!state.upper;
+  letters.forEach(([b,k])=>b.textContent=state.upper?k.toUpperCase():k);
+  render();
+});
+mk($("alpha"),":","num",()=>typeChar(":"));
+mk($("alpha"),"_","",()=>typeChar("_"));
+mk($("alpha"),"@","",()=>typeChar("@"));
+
+/* ---- PCキーボード ---- */
+window.addEventListener("keydown",e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  const k=e.key;
+  if(k.length===1){ e.preventDefault(); typeChar(k); }
+  else if(k==="Enter"){ e.preventDefault(); pressExec(); }
+  else if(k==="Backspace"){ e.preventDefault(); clr(e.shiftKey); }
+  else if(k==="PageUp"){ e.preventDefault(); paging(-1); }
+  else if(k==="PageDown"){ e.preventDefault(); paging(1); }
+  else if(k==="ArrowUp"){ e.preventDefault(); if(hIdx>0){ hIdx--; state.scratch=hist[hIdx]; state.msg=""; render(); } }
+  else if(k==="ArrowDown"){ e.preventDefault(); if(hIdx<hist.length){ hIdx++; state.scratch=hist[hIdx]||""; state.msg=""; render(); } }
+});
+
+/* ---- 画面いっぱいに合わせる (縦横の向き・サイズが変わるたびに再計算) ---- */
+let CH_RATIO=0.6;   // 等幅フォントの 1文字幅/フォントサイズ
+function measureFont(){
+  const t=document.createElement("span");
+  t.style.cssText="position:absolute;visibility:hidden;white-space:pre;letter-spacing:0;font-size:100px;font-family:"+getComputedStyle($("screen")).fontFamily;
+  t.textContent="M".repeat(24); document.body.appendChild(t);
+  CH_RATIO=t.getBoundingClientRect().width/2400||0.6; t.remove();
+}
+function fit(){
+  const root=document.documentElement.style, sc=$("screen");
+  $("cdu").classList.toggle("land", innerWidth/innerHeight>=1.1);
+  const w=sc.clientWidth-12, h=sc.clientHeight;
+  if(w>0&&h>0){
+    // 文字の大きさは行の高さで決め、余った横幅は字間で埋める
+    const fs=Math.max(8,Math.min(h/14/1.4, w/(COLS*(CH_RATIO+0.03))));
+    const ls=Math.max(0.03,Math.min(0.5,w/(COLS*fs)-CH_RATIO));
+    root.setProperty("--fs",fs+"px"); root.setProperty("--ls",ls+"em");
+  }
+  const rect=sel=>{const e=document.querySelector(sel); return e?e.getBoundingClientRect():{width:0,height:0};};
+  const a=rect(".alpha .k"), f=rect(".fn .k"), l=rect(".lsk button");
+  if(a.width) root.setProperty("--kfs",Math.max(10,Math.min(a.width*0.34,a.height*0.42,44))+"px");
+  if(f.width) root.setProperty("--fkfs",Math.max(9,Math.min(f.width*0.19,f.height*0.27,30))+"px");
+  if(l.width) root.setProperty("--lfs",Math.max(9,Math.min(l.width*0.38,l.height*0.4,22))+"px");
+}
+const fsBtn=$("fsBtn"), de=document.documentElement;
+if(de.requestFullscreen||de.webkitRequestFullscreen){
+  fsBtn.style.display="block";
+  fsBtn.addEventListener("click",()=>{
+    const on=document.fullscreenElement||document.webkitFullscreenElement;
+    if(on) (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    else (de.requestFullscreen||de.webkitRequestFullscreen).call(de);
+    fsBtn.blur();
+  });
+}
+window.addEventListener("resize",fit);
+window.addEventListener("orientationchange",()=>setTimeout(fit,150));
+if(window.ResizeObserver) new ResizeObserver(fit).observe($("cdu"));
+measureFont(); fit();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{measureFont();fit();});
+
+window.CDU = {config:CONFIG, execute};
+render();
+</script>
+</body>
+</html>

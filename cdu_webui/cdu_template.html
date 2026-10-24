@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>__TITLE__</title>
+<style>
+:root{
+  --page:#e9e7e2; --bezel:#2b2d2f; --bezel-hi:#3a3d40; --key:#d9d6cc; --key-txt:#1b1b1a; --key-edge:#9d998f;
+  --lcd:#050706; --w:#f2f2ee; --g:#4cf06a; --c:#4fd8ff; --m:#ff6bd6; --a:#ffb347; --r:#ff6b6b;
+  --fs:17px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#16171a}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--page);padding:20px 14px calc(28px + env(safe-area-inset-bottom,0px));
+  padding-top:calc(20px + env(safe-area-inset-top,0px));display:flex;justify-content:center}
+
+.cdu{width:min(100%,430px);background:linear-gradient(180deg,var(--bezel-hi),var(--bezel));border-radius:14px;
+  padding:14px 12px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08)}
+.lamps{display:flex;justify-content:space-between;padding:0 6px 8px;font:600 10px/1 ui-monospace,Menlo,monospace;color:#8b8e92}
+.lamp{display:flex;align-items:center;gap:5px}
+.lamp i{width:14px;height:6px;border-radius:2px;background:#444;display:block}
+.lamp.on{color:var(--a)}
+.lamp.on i{background:var(--a);box-shadow:0 0 6px var(--a)}
+.disp{display:grid;grid-template-columns:38px 1fr 38px;gap:6px}
+.lsk{display:flex;flex-direction:column;padding:calc(var(--fs)*1.6) 0}
+.lsk button{flex:1;margin:calc(var(--fs)*.45) 4px;border:0;border-radius:4px;background:var(--key);
+  box-shadow:0 2px 0 var(--key-edge);cursor:pointer;color:var(--key-txt);font:600 10px ui-monospace,monospace}
+.lsk button:active,.k:active{transform:translateY(2px);box-shadow:none}
+.screen{background:var(--lcd);border-radius:6px;border:2px solid #111;box-shadow:inset 0 0 14px #000;
+  font-family:"Roboto Mono","SFMono-Regular",Menlo,Consolas,"Courier New",monospace;font-size:var(--fs);
+  display:grid;grid-template-rows:repeat(14,calc(var(--fs)*1.6));padding:0 6px;overflow:hidden;min-width:0}
+.ln{display:flex;justify-content:space-between;align-items:center;white-space:pre;min-width:0}
+.ln.title{justify-content:center;position:relative}
+.ln.title .pg{position:absolute;right:0}
+.ln.lab{font-size:.68em;align-items:flex-end;padding-bottom:1px}
+.ln.txt{justify-content:flex-start}
+.w{color:var(--w)}.g{color:var(--g)}.c{color:var(--c)}.m{color:var(--m)}.a{color:var(--a)}.r{color:var(--r)}
+.sm{font-size:.78em}
+.cur{display:inline-block;width:.6em;height:1em;background:var(--w);margin-left:1px;animation:bl 1s steps(1) infinite;vertical-align:-.12em}
+@keyframes bl{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.cur{animation:none}}
+
+.keys{margin-top:12px;display:grid;gap:7px}
+.fn{display:grid;gap:6px}
+.alpha{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.k{border:0;border-radius:5px;background:var(--key);color:var(--key-txt);box-shadow:0 2px 0 var(--key-edge);
+  font:600 11px/1.15 ui-monospace,Menlo,monospace;min-height:34px;padding:2px;cursor:pointer;text-align:center}
+.k:focus-visible,.lsk button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+.k.fnk{background:#c9c6bb;min-height:36px;font-size:10.5px}
+.k.exec{position:relative}
+.k.exec::after{content:"";position:absolute;top:3px;left:25%;right:25%;height:4px;border-radius:2px;background:#555}
+.k.exec.lit::after{background:var(--g);box-shadow:0 0 8px var(--g)}
+.k.num{background:#ece9df;font-size:14px;min-height:38px}
+.k.span3{grid-column:span 3}
+.k.clr{background:#c9c6bb}
+</style>
+</head>
+<body>
+<div class="cdu">
+  <div class="lamps">
+    <span class="lamp" id="lDSPY"><i></i>DSPY</span>
+    <span class="lamp" id="lMSG"><i></i>MSG</span>
+    <span class="lamp" id="lCASE"><i></i><b id="caseTxt">abc</b></span>
+  </div>
+  <div class="disp">
+    <div class="lsk" id="lskL"></div>
+    <div class="screen" id="screen" aria-live="polite"></div>
+    <div class="lsk" id="lskR"></div>
+  </div>
+  <div class="keys">
+    <div class="fn" id="fn"></div>
+    <div class="alpha" id="alpha"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* このファイルは generate_cdu.py が生成します。直接編集せず、設定(TOML/JSON)かテンプレートを編集してください。
+   サーバ連携:
+     POST endpoint  リクエスト {"line":"fire a1","session":"<ID>"} / レスポンス {"output":"..."} (プレーンテキスト可)
+   file:// で開く or ?mock を付けるとダミー応答で動作確認できます。 */
+const CFG = __CONFIG_JSON__;
+const CONFIG = {
+  endpoint: CFG.server.endpoint,
+  timeoutMs: CFG.server.timeout_ms,
+  mock: location.protocol === "file:" || /[?&]mock/.test(location.search)
+};
+let SESSION; try { SESSION = crypto.randomUUID(); } catch { SESSION = Date.now()+"-"+Math.random().toString(36).slice(2); }
+
+const COLS = 24, PER = 11, MAXLEN = 120;
+const state = {pid:CFG.home, from:"", fields:{}, lines:[], opage:0, cmd:"", scratch:"", msg:"", busy:false, upper:false};
+const hist = []; let hIdx = 0;
+const curPage = () => CFG.pages[state.pid];
+
+/* ---- ANSI -> セル列 ---- */
+const ACOL = {31:"r",32:"g",33:"a",34:"c",35:"m",36:"c",37:"w"};
+function parseAnsi(s){
+  const rows=[[]]; let c="w";
+  s = s.replace(/\r/g,"").replace(/\t/g,"    ");
+  const push = t => { for(const ch of t){ if(ch==="\n") rows.push([]); else rows[rows.length-1].push({ch,c}); } };
+  const re=/\x1b\[([\d;]*)m/g; let last=0,m;
+  while((m=re.exec(s))){
+    push(s.slice(last,m.index));
+    for(const p of (m[1]||"0").split(";")){
+      const n=+p; if(n===0) c="w"; else if(ACOL[n]) c=ACOL[n]; else if(ACOL[n-60]) c=ACOL[n-60];
+    }
+    last=re.lastIndex;
+  }
+  push(s.slice(last));
+  if(rows.length>1 && !rows[rows.length-1].length) rows.pop();
+  return rows;
+}
+function wrap(rows){
+  const out=[];
+  rows.forEach(r=>{
+    let a=r.slice();
+    if(!a.length){ out.push([]); return; }
+    while(a.length>COLS){
+      let cut=COLS;
+      for(let i=COLS;i>=8;i--) if(a[i] && a[i].ch===" "){ cut=i; break; }
+      const atSpace = a[cut] && a[cut].ch===" ";
+      out.push(a.slice(0,cut)); a=a.slice(cut);
+      if(atSpace) while(a[0] && a[0].ch===" ") a.shift();
+    }
+    out.push(a);
+  });
+  return out;
+}
+const toCells = (t,c) => [...t].map(ch=>({ch,c}));
+
+/* ---- 描画 ---- */
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const sp = (t,c) => `<span class="${c||"w"}">${esc(t||" ")}</span>`;
+function lineHTML(cells){
+  let h="",cur=null,buf="";
+  for(const {ch,c} of cells){ if(c!==cur){ if(buf) h+=sp(buf,cur); cur=c; buf=""; } buf+=ch; }
+  return h+(buf?sp(buf,cur):"");
+}
+/* フィールドキー: 値(未入力は□)を表示。それ以外は label */
+const fkey = (k,n) => state.pid+"."+(n||k.name);
+function keyText(k){
+  if(k.action!=="field") return k.label;
+  const v=state.fields[fkey(k)];
+  return v ? (v.length>12 ? v.slice(0,11)+"…" : v) : "□".repeat(k.len);
+}
+const keyColor = k => k.action==="field" && !state.fields[fkey(k)] ? "c" : k.color;
+
+function render(){
+  const s=state, p=curPage(); let h="";
+  if(p.type==="menu"){
+    const grp=CFG.groups[p.group], pg=grp.length>1 ? `${grp.indexOf(s.pid)+1}/${grp.length}` : "";
+    h+=`<div class="ln title">${sp(p.title)}<span class="pg w sm">${pg}</span></div>`;
+    for(let i=1;i<=6;i++){
+      const L=p.keys["L"+i]||{}, R=p.keys["R"+i]||{};
+      h+=`<div class="ln lab">${sp(L.hint,"c")}${sp(R.hint,"c")}</div>`;
+      h+=`<div class="ln">${sp(keyText(L),keyColor(L))}${sp(keyText(R),keyColor(R))}</div>`;
+    }
+  } else {
+    const tot=Math.max(1,Math.ceil(s.lines.length/PER));
+    const title=s.cmd.length>15 ? s.cmd.slice(0,14)+"…" : s.cmd;
+    h+=`<div class="ln title">${sp(title||p.title)}<span class="pg w sm">${s.opage+1}/${tot}</span></div>`;
+    const part=s.lines.slice(s.opage*PER,s.opage*PER+PER);
+    for(let i=0;i<PER;i++) h+=`<div class="ln txt">${part[i]?lineHTML(part[i]):""}</div>`;
+    const L=p.keys.L6||{}, R=p.keys.R6||{};
+    h+=`<div class="ln">${sp(L.label,L.color)}${sp(R.label,R.color)}</div>`;
+  }
+  let sc;
+  if(s.busy) sc=sp("SENDING...","c");
+  else if(s.msg) sc=sp(s.msg,"a");
+  else{
+    const t=s.scratch.length>COLS-1 ? "…"+s.scratch.slice(-(COLS-2)) : s.scratch;
+    sc=(t?sp(t):"")+'<i class="cur"></i>';
+  }
+  h+=`<div class="ln txt">${sc}</div>`;
+  $("screen").innerHTML=h;
+  $("lDSPY").classList.toggle("on",s.busy);
+  $("lMSG").classList.toggle("on",!!s.msg);
+  $("lCASE").classList.toggle("on",s.upper);
+  $("caseTxt").textContent=s.upper?"ABC":"abc";
+  const ex=document.querySelector(".k.exec"); if(ex) ex.classList.toggle("lit",!!s.scratch.trim());
+}
+
+/* ---- サーバ送信 ---- */
+const mock = line => new Promise(r=>setTimeout(()=>r(
+  "\x1b[33m[mock]\x1b[0m "+line+"\n\x1b[32mTarget:a1       DISTANCE:123.45    Charge:2    ElevAngle:45.00    Azimuth:123.4\x1b[0m\n\x1b[31m[ ] a2    : K5 3\x1b[0m\nno server connected"),200));
+
+async function execute(line, keep){
+  line=line.trim(); if(!line) return;
+  if(curPage().type!=="output") state.from=state.pid;   // 結果画面の <BACK 用
+  hist.push(line); hIdx=hist.length;
+  if(!keep) state.scratch="";
+  state.msg=""; state.busy=true; render();
+  let out;
+  try{
+    if(CONFIG.mock) out=await mock(line);
+    else{
+      const ctl=new AbortController(), to=setTimeout(()=>ctl.abort(),CONFIG.timeoutMs);
+      const res=await fetch(CONFIG.endpoint,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({line,session:SESSION}),signal:ctl.signal});
+      clearTimeout(to);
+      const txt=await res.text();
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      try{ const j=JSON.parse(txt); out=typeof j==="string"?j:(j.output ?? txt); }catch{ out=txt; }
+    }
+  }catch(e){
+    state.busy=false;
+    state.msg = e.name==="AbortError" ? "SERVER TIMEOUT" : /^HTTP/.test(e.message) ? "SERVER ERROR "+e.message.slice(5) : "NO SERVER RESPONSE";
+    if(!keep) state.scratch=line;     // 再送できるように戻す
+    render(); return;
+  }
+  state.busy=false; state.pid=CFG.result_page; state.cmd=line; state.opage=0;
+  state.lines = String(out).trim() ? wrap(parseAnsi(String(out))) : [toCells("(NO OUTPUT)","g")];
+  render();
+}
+
+/* ---- コマンドショートカット: 引数ありはスクラッチパッドの内容を引数として実行 ---- */
+function shortcut(t,a){
+  const p=state.scratch.trim();
+  if(a==="req"){
+    if(p.toLowerCase().startsWith(t)){ if(p.length>t.length) execute(p); return; }  // 入力済みならそのまま実行
+    if(p) return execute(t+" "+p);
+    state.scratch=t+" "; state.msg=""; return render();                              // 空なら雛形を入れる
+  }
+  if(a==="opt" && p) return execute(t+" "+p);
+  execute(t,true);
+}
+function paging(d){
+  const p=curPage();
+  if(p.type==="menu"){
+    const grp=CFG.groups[p.group];
+    state.pid=grp[(grp.indexOf(state.pid)+d+grp.length)%grp.length];
+  } else {
+    const tot=Math.max(1,Math.ceil(state.lines.length/PER));
+    state.opage=Math.min(tot-1,Math.max(0,state.opage+d));
+  }
+  render();
+}
+function pressExec(){ if(state.scratch.trim()) execute(state.scratch); }
+function doKey(k){
+  if(!k) return;
+  switch(k.action){
+    case "command": return shortcut(k.command,k.args);
+    case "page":    state.pid=k.page; state.msg=""; return render();
+    case "back":    state.pid=state.from||CFG.home; state.msg=""; return render();
+    case "field": {                       // スクラッチパッド -> フィールド / 空ならフィールド -> スクラッチパッド
+      const key=fkey(k), sp=state.scratch.trim();
+      if(sp){ state.fields[key]=sp; state.scratch=""; state.msg=""; }
+      else if(state.fields[key]) state.scratch=state.fields[key];
+      return render();
+    }
+    case "reset":
+      Object.keys(state.fields).forEach(n=>{ if(n.startsWith(state.pid+".")) delete state.fields[n]; });
+      return render();
+    case "submit": {                      // コマンドテンプレートの {name} をフィールド値で置換して送信
+      const missing=[];
+      const line=k.command.replace(/\{(\w+)\}/g,(m,n)=>{
+        const v=(state.fields[fkey(k,n)]||"").trim(); if(!v) missing.push(n.toUpperCase()); return v; });
+      if(missing.length){ state.msg=("NEED "+missing.join(" ")).slice(0,COLS); return render(); }
+      if(k.clear) Object.keys(state.fields).forEach(n=>{ if(n.startsWith(state.pid+".")) delete state.fields[n]; });
+      return execute(line,true);
+    }
+    case "repeat":  return state.cmd && execute(state.cmd,true);
+    case "exec":    return pressExec();
+    case "prev":    return paging(-1);
+    case "next":    return paging(1);
+  }
+}
+
+/* ---- 文字入力 ---- */
+function typeChar(ch){
+  state.msg="";
+  if(state.scratch.length<MAXLEN) state.scratch+=ch;
+  render();
+}
+function clr(all){
+  if(state.msg) state.msg=""; else state.scratch = all ? "" : state.scratch.slice(0,-1);
+  render();
+}
+
+/* ---- キー生成 ---- */
+function mk(parent,html,cls,fn){
+  const b=document.createElement("button");
+  b.type="button"; b.className="k "+(cls||""); b.innerHTML=html;
+  b.addEventListener("click",()=>{fn();b.blur();}); parent.appendChild(b); return b;
+}
+["L","R"].forEach(side=>{
+  const el=$(side==="L"?"lskL":"lskR");
+  for(let i=1;i<=6;i++){
+    const b=document.createElement("button"); b.type="button"; b.textContent=side+i;
+    b.setAttribute("aria-label","LSK "+side+i);
+    b.addEventListener("click",()=>{doKey(curPage().keys[side+i]);b.blur();}); el.appendChild(b);
+  }
+});
+$("fn").style.gridTemplateColumns=`repeat(${CFG.ui.fn_columns},1fr)`;
+CFG.fnkeys.forEach(k=>mk($("fn"),esc(k.label).replace(/\n/g,"<br>"),"fnk"+(k.action==="exec"?" exec":""),()=>doKey(k)));
+
+/* 英数字キー(固定) */
+const letters=[];
+[ "1","2","3","a","b","c","d","e", "4","5","6","f","g","h","i","j", "7","8","9","k","l","m","n","o",
+  ".","0","-","p","q","r","s","t", "SP","DEL","/","u","v","w","x","y" ].forEach(k=>{
+  const isL=/^[a-z]$/.test(k), isNum=/^[0-9.\-]$/.test(k);
+  const b=mk($("alpha"),k,isNum?"num":"",()=>{
+    if(k==="SP") typeChar(" ");
+    else if(k==="DEL") clr(true);
+    else typeChar(isL ? (state.upper?k.toUpperCase():k) : k);
+  });
+  if(isL) letters.push([b,k]);
+  if(k==="DEL") b.title="入力中の内容を全消去";
+});
+mk($("alpha"),"CLR","clr span3",()=>clr(false));
+letters.push([mk($("alpha"),"z","",()=>typeChar(state.upper?"Z":"z")),"z"]);
+mk($("alpha"),"a/A","",()=>{
+  state.upper=!state.upper;
+  letters.forEach(([b,k])=>b.textContent=state.upper?k.toUpperCase():k);
+  render();
+});
+mk($("alpha"),":","num",()=>typeChar(":"));
+mk($("alpha"),"_","",()=>typeChar("_"));
+mk($("alpha"),"@","",()=>typeChar("@"));
+
+/* ---- PCキーボード ---- */
+window.addEventListener("keydown",e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  const k=e.key;
+  if(k.length===1){ e.preventDefault(); typeChar(k); }
+  else if(k==="Enter"){ e.preventDefault(); pressExec(); }
+  else if(k==="Backspace"){ e.preventDefault(); clr(e.shiftKey); }
+  else if(k==="PageUp"){ e.preventDefault(); paging(-1); }
+  else if(k==="PageDown"){ e.preventDefault(); paging(1); }
+  else if(k==="ArrowUp"){ e.preventDefault(); if(hIdx>0){ hIdx--; state.scratch=hist[hIdx]; state.msg=""; render(); } }
+  else if(k==="ArrowDown"){ e.preventDefault(); if(hIdx<hist.length){ hIdx++; state.scratch=hist[hIdx]||""; state.msg=""; render(); } }
+});
+
+window.CDU = {config:CONFIG, execute};
+render();
+</script>
+</body>
+</html>
