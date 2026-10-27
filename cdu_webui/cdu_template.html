@@ -2,36 +2,51 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2b2d2f">
 <title>__TITLE__</title>
 <style>
 :root{
-  --page:#e9e7e2; --bezel:#2b2d2f; --bezel-hi:#3a3d40; --key:#d9d6cc; --key-txt:#1b1b1a; --key-edge:#9d998f;
+  --page:#16171a; --bezel:#2b2d2f; --bezel-hi:#3a3d40; --key:#d9d6cc; --key-txt:#1b1b1a; --key-edge:#9d998f;
   --lcd:#050706; --w:#f2f2ee; --g:#4cf06a; --c:#4fd8ff; --m:#ff6bd6; --a:#ffb347; --r:#ff6b6b;
-  --fs:17px;
+  --fs:17px; --ls:.1em; --kfs:14px; --fkfs:12px; --lfs:11px;
+  --lskw:clamp(34px,7vmin,72px); --gap:clamp(4px,1vmin,12px);
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#16171a}}
 *{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--page);padding:20px 14px calc(28px + env(safe-area-inset-bottom,0px));
-  padding-top:calc(20px + env(safe-area-inset-top,0px));display:flex;justify-content:center}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{background:var(--page);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 
-.cdu{width:min(100%,430px);background:linear-gradient(180deg,var(--bezel-hi),var(--bezel));border-radius:14px;
-  padding:14px 12px 16px;box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08)}
-.lamps{display:flex;justify-content:space-between;padding:0 6px 8px;font:600 10px/1 ui-monospace,Menlo,monospace;color:#8b8e92}
+/* 画面全体に敷き詰める。縦長は上下、横長は左右に分割 */
+.cdu{position:fixed;display:flex;flex-direction:column;gap:var(--gap);padding:clamp(8px,1.8vmin,24px);
+  inset:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+  background:linear-gradient(180deg,var(--bezel-hi),var(--bezel));border-radius:clamp(10px,2vmin,26px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.cdu.land{flex-direction:row}
+.left{display:flex;flex-direction:column;min-height:0;min-width:0;flex:1 1 58%}
+.cdu.land .left{flex:0 0 54%}
+.keys{flex:1 1 42%;min-height:0;min-width:0;display:flex;flex-direction:column;gap:var(--gap)}
+
+.lamps{flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 6px var(--gap);
+  font:600 clamp(9px,1.5vmin,14px)/1 ui-monospace,Menlo,monospace;color:#8b8e92}
 .lamp{display:flex;align-items:center;gap:5px}
-.lamp i{width:14px;height:6px;border-radius:2px;background:#444;display:block}
+.lamp i{width:1.4em;height:.6em;border-radius:2px;background:#444;display:block}
 .lamp.on{color:var(--a)}
 .lamp.on i{background:var(--a);box-shadow:0 0 6px var(--a)}
-.disp{display:grid;grid-template-columns:38px 1fr 38px;gap:6px}
-.lsk{display:flex;flex-direction:column;padding:calc(var(--fs)*1.6) 0}
-.lsk button{flex:1;margin:calc(var(--fs)*.45) 4px;border:0;border-radius:4px;background:var(--key);
-  box-shadow:0 2px 0 var(--key-edge);cursor:pointer;color:var(--key-txt);font:600 10px ui-monospace,monospace}
+.fsb{display:none;border:0;background:transparent;color:#8b8e92;font-size:1.6em;line-height:1;cursor:pointer;padding:0 4px}
+
+.disp{flex:1;min-height:0;display:grid;grid-template-columns:var(--lskw) minmax(0,1fr) var(--lskw);gap:var(--gap)}
+.lsk{display:grid;grid-template-rows:repeat(14,minmax(0,1fr));padding:2px 0;min-height:0}
+.lsk button{align-self:center;height:70%;margin:0 6%;min-width:0;padding:0;border:0;border-radius:clamp(3px,.7vmin,8px);
+  background:var(--key);box-shadow:0 clamp(2px,.4vmin,4px) 0 var(--key-edge);cursor:pointer;color:var(--key-txt);
+  font:600 var(--lfs) ui-monospace,monospace}
 .lsk button:active,.k:active{transform:translateY(2px);box-shadow:none}
-.screen{background:var(--lcd);border-radius:6px;border:2px solid #111;box-shadow:inset 0 0 14px #000;
-  font-family:"Roboto Mono","SFMono-Regular",Menlo,Consolas,"Courier New",monospace;font-size:var(--fs);
-  display:grid;grid-template-rows:repeat(14,calc(var(--fs)*1.6));padding:0 6px;overflow:hidden;min-width:0}
-.ln{display:flex;justify-content:space-between;align-items:center;white-space:pre;min-width:0}
+.screen{min-height:0;min-width:0;background:var(--lcd);border-radius:6px;border:2px solid #111;box-shadow:inset 0 0 14px #000;
+  font-family:"Roboto Mono","SFMono-Regular",Menlo,Consolas,"Courier New",monospace;font-size:var(--fs);letter-spacing:var(--ls);
+  display:grid;grid-template-rows:repeat(14,minmax(0,1fr));padding:0 6px;overflow:hidden}
+.ln{display:flex;justify-content:space-between;align-items:center;white-space:pre;min-width:0;min-height:0;overflow:hidden}
+.ln>span:last-child{margin-right:calc(var(--ls)*-1)}
 .ln.title{justify-content:center;position:relative}
 .ln.title .pg{position:absolute;right:0}
 .ln.lab{font-size:.68em;align-items:flex-end;padding-bottom:1px}
@@ -42,32 +57,37 @@ body{background:var(--page);padding:20px 14px calc(28px + env(safe-area-inset-bo
 @keyframes bl{50%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.cur{animation:none}}
 
-.keys{margin-top:12px;display:grid;gap:7px}
-.fn{display:grid;gap:6px}
-.alpha{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
-.k{border:0;border-radius:5px;background:var(--key);color:var(--key-txt);box-shadow:0 2px 0 var(--key-edge);
-  font:600 11px/1.15 ui-monospace,Menlo,monospace;min-height:34px;padding:2px;cursor:pointer;text-align:center}
+.fn,.alpha{display:grid;gap:var(--gap);min-height:0}
+.fn{flex:3 1 0}
+.alpha{flex:6 1 0;margin-top:calc(var(--gap)*3);grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr))}  /* margin-top: ページキーとの誤タップ防止の隙間 */
+.k{min-width:0;min-height:0;padding:0;border:0;border-radius:clamp(4px,.9vmin,10px);background:var(--key);color:var(--key-txt);
+  box-shadow:0 clamp(2px,.4vmin,4px) 0 var(--key-edge);font:600 var(--kfs)/1.1 ui-monospace,Menlo,monospace;cursor:pointer;text-align:center}
 .k:focus-visible,.lsk button:focus-visible{outline:2px solid var(--c);outline-offset:2px}
-.k.fnk{background:#c9c6bb;min-height:36px;font-size:10.5px}
+.k.fnk{background:#c9c6bb;font-size:var(--fkfs)}
 .k.exec{position:relative}
-.k.exec::after{content:"";position:absolute;top:3px;left:25%;right:25%;height:4px;border-radius:2px;background:#555}
+.k.exec::after{content:"";position:absolute;top:8%;left:25%;right:25%;height:7%;min-height:3px;border-radius:2px;background:#555}
 .k.exec.lit::after{background:var(--g);box-shadow:0 0 8px var(--g)}
-.k.num{background:#ece9df;font-size:14px;min-height:38px}
-.k.span3{grid-column:span 3}
+.k.num{background:#ece9df;font-size:calc(var(--kfs)*1.2)}
+.kl{display:inline-flex;align-items:center;justify-content:center;pointer-events:none}
+.kl.bx{width:1.5em;height:1.5em;line-height:1;border:max(1.5px,.09em) solid currentColor;border-radius:2px}   /* A S T P の四角囲み */
+.k.sm .kl{font-size:.78em}
 .k.clr{background:#c9c6bb}
 </style>
 </head>
 <body>
-<div class="cdu">
-  <div class="lamps">
-    <span class="lamp" id="lDSPY"><i></i>DSPY</span>
-    <span class="lamp" id="lMSG"><i></i>MSG</span>
-    <span class="lamp" id="lCASE"><i></i><b id="caseTxt">abc</b></span>
-  </div>
-  <div class="disp">
-    <div class="lsk" id="lskL"></div>
-    <div class="screen" id="screen" aria-live="polite"></div>
-    <div class="lsk" id="lskR"></div>
+<div class="cdu" id="cdu">
+  <div class="left">
+    <div class="lamps">
+      <span class="lamp" id="lDSPY"><i></i>DSPY</span>
+      <span class="lamp" id="lMSG"><i></i>MSG</span>
+      <span class="lamp" id="lCASE"><i></i><b id="caseTxt">abc</b></span>
+      <button class="fsb" id="fsBtn" type="button" aria-label="全画面表示">&#x26F6;</button>
+    </div>
+    <div class="disp">
+      <div class="lsk" id="lskL"></div>
+      <div class="screen" id="screen" aria-live="polite"></div>
+      <div class="lsk" id="lskR"></div>
+    </div>
   </div>
   <div class="keys">
     <div class="fn" id="fn"></div>
@@ -291,35 +311,70 @@ function mk(parent,html,cls,fn){
   for(let i=1;i<=6;i++){
     const b=document.createElement("button"); b.type="button"; b.textContent=side+i;
     b.setAttribute("aria-label","LSK "+side+i);
+    b.style.gridRow=`${2+(i-1)*2} / span 2`;      // 画面の行(ラベル+データ)に合わせる
     b.addEventListener("click",()=>{doKey(curPage().keys[side+i]);b.blur();}); el.appendChild(b);
   }
 });
-$("fn").style.gridTemplateColumns=`repeat(${CFG.ui.fn_columns},1fr)`;
+const FN_ROWS=Math.max(1,Math.ceil(CFG.fnkeys.length/CFG.ui.fn_columns));
+$("fn").style.gridTemplateColumns=`repeat(${CFG.ui.fn_columns},minmax(0,1fr))`;
+$("fn").style.gridTemplateRows=`repeat(${FN_ROWS},minmax(0,1fr))`;
+$("fn").style.flexGrow=FN_ROWS;
 CFG.fnkeys.forEach(k=>mk($("fn"),esc(k.label).replace(/\n/g,"<br>"),"fnk"+(k.action==="exec"?" exec":""),()=>doKey(k)));
 
-/* 英数字キー(固定) */
-const letters=[];
-[ "1","2","3","a","b","c","d","e", "4","5","6","f","g","h","i","j", "7","8","9","k","l","m","n","o",
-  ".","0","-","p","q","r","s","t", "SP","DEL","/","u","v","w","x","y" ].forEach(k=>{
-  const isL=/^[a-z]$/.test(k), isNum=/^[0-9.\-]$/.test(k);
-  const b=mk($("alpha"),k,isNum?"num":"",()=>{
-    if(k==="SP") typeChar(" ");
-    else if(k==="DEL") clr(true);
-    else typeChar(isL ? (state.upper?k.toUpperCase():k) : k);
-  });
-  if(isL) letters.push([b,k]);
-  if(k==="DEL") b.title="入力中の内容を全消去";
-});
-mk($("alpha"),"CLR","clr span3",()=>clr(false));
-letters.push([mk($("alpha"),"z","",()=>typeChar(state.upper?"Z":"z")),"z"]);
-mk($("alpha"),"a/A","",()=>{
-  state.upper=!state.upper;
-  letters.forEach(([b,k])=>b.textContent=state.upper?k.toUpperCase():k);
-  render();
-});
-mk($("alpha"),":","num",()=>typeChar(":"));
-mk($("alpha"),"_","",()=>typeChar("_"));
-mk($("alpha"),"@","",()=>typeChar("@"));
+/* 英数字キー: 配列は2種類 (CDU = 実機風のA〜Z / QWERTY = 数字つき・行列そろえ) 。
+   記法: 通常文字はそのまま、特殊キーは CASE CLR DEL SP LAYOUT、"名前*N" で N列分の幅 */
+const LAYOUTS = {
+  cdu:{cols:8, rows:[
+    ["1","2","3","a","b","c","d","e"],
+    ["4","5","6","f","g","h","i","j"],
+    ["7","8","9","k","l","m","n","o"],
+    [".","0","-","p","q","r","s","t"],
+    [":","/","LAYOUT","u","v","w","x","y"],
+    ["CASE","CLR","DEL","z","SP*4"]]},
+  qwerty:{cols:10, rows:[
+    ["1","2","3","4","5","6","7","8","9","0"],
+    ["q","w","e","r","t","y","u","i","o","p"],
+    ["a","s","d","f","g","h","j","k","l",":"],
+    ["z","x","c","v","b","n","m",".","-","/"],
+    ["@","_",",",";","'","\"","(",")","+","="],
+    ["CASE","CLR","DEL","SP*5","LAYOUT*2"]]}
+};
+const BOXED = new Set(["a","s","r","p"]);          // 四角囲みのキー
+let layoutName="cdu", letters=[];
+try{ if(localStorage.getItem("cdu.layout")==="qwerty") layoutName="qwerty"; }catch{}
+
+function buildKeys(){
+  const L=LAYOUTS[layoutName], el=$("alpha"); letters=[]; el.innerHTML="";
+  el.style.gridTemplateColumns=`repeat(${L.cols},minmax(0,1fr))`;
+  L.rows.forEach(row=>row.forEach(item=>{
+    const [tok,span]=item.split("*");
+    const b=document.createElement("button"), kl=document.createElement("span");
+    b.type="button"; b.className="k"; kl.className="kl"; b.appendChild(kl);
+    if(span) b.style.gridColumn="span "+span;
+    const isL=/^[a-z]$/.test(tok);
+    let act;
+    if(tok==="SP"){ kl.textContent="SP"; act=()=>typeChar(" "); }
+    else if(tok==="CLR"){ kl.textContent="CLR"; b.classList.add("clr"); act=()=>clr(false); }
+    else if(tok==="DEL"){ kl.textContent="DEL"; b.classList.add("clr"); b.title="入力中の内容を全消去"; act=()=>clr(true); }
+    else if(tok==="CASE"){ kl.textContent="a/A"; act=()=>{
+      state.upper=!state.upper;
+      letters.forEach(([x,k])=>x.textContent=state.upper?k.toUpperCase():k);
+      render(); }; }
+    else if(tok==="LAYOUT"){ kl.textContent=layoutName==="cdu"?"QWERTY":"CDU"; b.classList.add("clr","sm");
+      act=()=>{ layoutName=layoutName==="cdu"?"qwerty":"cdu";
+        try{localStorage.setItem("cdu.layout",layoutName);}catch{}
+        buildKeys(); fit(); }; }
+    else{
+      kl.textContent = isL&&state.upper ? tok.toUpperCase() : tok;
+      if(isL){ letters.push([kl,tok]); if(BOXED.has(tok)) kl.classList.add("bx"); }
+      if(/^[0-9]$/.test(tok) || (layoutName==="cdu" && /^[.\-:\/]$/.test(tok))) b.classList.add("num");
+      act=()=>typeChar(isL&&state.upper ? tok.toUpperCase() : tok);
+    }
+    b.addEventListener("click",()=>{act();b.blur();});
+    el.appendChild(b);
+  }));
+}
+buildKeys();
 
 /* ---- PCキーボード ---- */
 window.addEventListener("keydown",e=>{
@@ -333,6 +388,46 @@ window.addEventListener("keydown",e=>{
   else if(k==="ArrowUp"){ e.preventDefault(); if(hIdx>0){ hIdx--; state.scratch=hist[hIdx]; state.msg=""; render(); } }
   else if(k==="ArrowDown"){ e.preventDefault(); if(hIdx<hist.length){ hIdx++; state.scratch=hist[hIdx]||""; state.msg=""; render(); } }
 });
+
+/* ---- 画面いっぱいに合わせる (縦横の向き・サイズが変わるたびに再計算) ---- */
+let CH_RATIO=0.6;   // 等幅フォントの 1文字幅/フォントサイズ
+function measureFont(){
+  const t=document.createElement("span");
+  t.style.cssText="position:absolute;visibility:hidden;white-space:pre;letter-spacing:0;font-size:100px;font-family:"+getComputedStyle($("screen")).fontFamily;
+  t.textContent="M".repeat(24); document.body.appendChild(t);
+  CH_RATIO=t.getBoundingClientRect().width/2400||0.6; t.remove();
+}
+function fit(){
+  const root=document.documentElement.style, sc=$("screen");
+  $("cdu").classList.toggle("land", innerWidth/innerHeight>=1.1);
+  const w=sc.clientWidth-12, h=sc.clientHeight;
+  if(w>0&&h>0){
+    // 文字の大きさは行の高さで決め、余った横幅は字間で埋める
+    const fs=Math.max(8,Math.min(h/14/1.4, w/(COLS*(CH_RATIO+0.03))));
+    const ls=Math.max(0.03,Math.min(0.5,w/(COLS*fs)-CH_RATIO));
+    root.setProperty("--fs",fs+"px"); root.setProperty("--ls",ls+"em");
+  }
+  const rect=sel=>{const e=document.querySelector(sel); return e?e.getBoundingClientRect():{width:0,height:0};};
+  const a=rect(".alpha .k"), f=rect(".fn .k"), l=rect(".lsk button");
+  if(a.width) root.setProperty("--kfs",Math.max(10,Math.min(a.width*0.34,a.height*0.42,44))+"px");
+  if(f.width) root.setProperty("--fkfs",Math.max(9,Math.min(f.width*0.19,f.height*0.36,30))+"px");
+  if(l.width) root.setProperty("--lfs",Math.max(9,Math.min(l.width*0.38,l.height*0.4,22))+"px");
+}
+const fsBtn=$("fsBtn"), de=document.documentElement;
+if(de.requestFullscreen||de.webkitRequestFullscreen){
+  fsBtn.style.display="block";
+  fsBtn.addEventListener("click",()=>{
+    const on=document.fullscreenElement||document.webkitFullscreenElement;
+    if(on) (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+    else (de.requestFullscreen||de.webkitRequestFullscreen).call(de);
+    fsBtn.blur();
+  });
+}
+window.addEventListener("resize",fit);
+window.addEventListener("orientationchange",()=>setTimeout(fit,150));
+if(window.ResizeObserver) new ResizeObserver(fit).observe($("cdu"));
+measureFont(); fit();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{measureFont();fit();});
 
 window.CDU = {config:CONFIG, execute};
 render();

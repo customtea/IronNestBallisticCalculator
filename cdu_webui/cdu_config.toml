@@ -34,16 +34,16 @@ result_page = "output"   # コマンド実行結果を表示するページ (typ
 fnkeys = [
   { label = "MENU",         page = "main" },
   { label = "POS\nADD",     page = "pos_add" },
-  { label = "ONE",          page = "one" },
+  { label = "HELP",         command = "help", args = "opt" },
   { label = "TWO\nA",       page = "two_a" },
   { label = "TWO\nD",       page = "two_d" },
   { label = "POS\nLIST",    command = "pos list" },
   { label = "TASK\nLIST",   command = "task list" },
   { label = "MYPOS",        command = "mypos get" },
-  { label = "AFIRE",        command = "afire" },
-  { label = "HELP",         command = "help", args = "opt" },
-  { label = "FIRE",         command = "fire",  args = "req" },
-  { label = "DFIRE",        command = "dfire", args = "req" },
+  { label = "ONE",          page = "one" },
+  { label = "TWO\nAD",      page = "two_ad" },
+  { label = "FIRE",         page = "do_fire" },
+  { label = "DFIRE",        page  ="do_dfire" },
   { label = "EXEC",         action = "exec" },
   { label = "PREV\nPAGE",   action = "prev" },
   { label = "NEXT\nPAGE",   action = "next" },
@@ -79,9 +79,9 @@ keys = [
   { slot = "R2", label = "TWO D",   page = "two_d",   hint = "2 POINTS+DIST" },
   { slot = "L3", label = "TWO AD",  page = "two_ad",  hint = "ANGLE+DIST" },
   { slot = "R3", command = "mypos set", args = "req", hint = "GRID" },
-  { slot = "L4", command = "fire",   args = "req", hint = "NAME" },
-  { slot = "R4", command = "dfire",  args = "req", hint = "NAME1 NAME2" },
-  { slot = "L5", command = "afire" },
+  { slot = "L4", command = "fire",  page = "do_fire", hint = "NAME" },
+  { slot = "R4", command = "dfire", page = "do_dfire", hint = "NAME1 NAME2" },
+  { slot = "L5", command = "afire", hint = "ALL CALC"},
   { slot = "R5", command = "mypos get" },
   { slot = "L6", command = "pos list" },
   { slot = "R6", command = "task list" },
@@ -100,7 +100,6 @@ keys = [
   { slot = "L3", command = "task uflag", args = "req", hint = "NAME" },
   { slot = "R3", command = "help",       args = "opt", hint = "CMD" },
   { slot = "L4", command = "help --all" },
-  { slot = "R4", command = "exit", color = "a" },
 ]
 
 # ---------- 入力フォーム ----------
@@ -124,7 +123,7 @@ keys = [
   { slot = "L1", action = "field", name = "new",  label = "NEW NAME",   len = 5 },
   { slot = "L2", action = "field", name = "p",    label = "BASE POINT", len = 5 },
   { slot = "R2", action = "field", name = "ang",  label = "ANGLE",      len = 6 },
-  { slot = "L3", action = "field", name = "dist", label = "DISTANCE",   len = 6 },
+  { slot = "R3", action = "field", name = "dist", label = "DISTANCE",   len = 6 },
   { slot = "L5", action = "reset" },
   { slot = "L6", label = "MENU", page = "main" },
   { slot = "R6", action = "submit", command = "one {new} {p} {ang} {dist}" },
@@ -173,6 +172,29 @@ keys = [
   { slot = "L5", action = "reset" },
   { slot = "L6", label = "MENU", page = "main" },
   { slot = "R6", action = "submit", command = "two ad {new} {p1} {a1} {p2} {d2}" },
+]
+
+[[pages]]
+id    = "do_fire"
+type  = "menu"
+title = "SINGLE CANNON"
+keys = [
+  { slot = "L1", action = "field", name = "pos", label = "POINT", len = 5 },
+  { slot = "L5", action = "reset" },
+  { slot = "L6", label = "MENU", page = "main" },
+  { slot = "R6", action = "submit", command = "fire {pos}" },
+]
+
+[[pages]]
+id    = "do_dfire"
+type  = "menu"
+title = "DOUBLE CANNON"
+keys = [
+  { slot = "L1", action = "field", name = "p1", label = "LEFT  CANNON", len = 5 },
+  { slot = "R1", action = "field", name = "p2",  label = "RIGHT CANNON",  len = 5 },
+  { slot = "L5", action = "reset" },
+  { slot = "L6", label = "MENU", page = "main" },
+  { slot = "R6", action = "submit", command = "dfire {p1} {p2}" },
 ]
 
 # ---------- コマンド結果 ----------

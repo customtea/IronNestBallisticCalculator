@@ -49,8 +49,8 @@ class CommandRegistry:
             for part in parts:
                 node = node.children.setdefault(part, CommandNode())
 
-            if node.handler is not None:
-                raise ValueError(f'Command "{path}" is already registered.')
+            # if node.handler is not None:
+            #     raise ValueError(f'Command "{path}" is already registered.')
 
             node.handler = func
             node.helptext = helptext
@@ -400,6 +400,7 @@ def task_check(shell: IronNestShell, argv:list[str]):
         print(f"Not Found {name}")
         return
     r.is_cmpl = True
+    print(f"Flagged {name}")
 
 
 @registry.command("task uflag", "<PointName>", "UnFlagged Task(Position) Item")
@@ -413,6 +414,7 @@ def task_uncheck(shell: IronNestShell, argv:list[str]):
         print(f"Not Found {name}")
         return
     r.is_cmpl = False
+    print(f"Unflagged {name}")
 
 
 

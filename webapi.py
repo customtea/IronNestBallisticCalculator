@@ -1,16 +1,17 @@
+from typing import IO
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.responses import HTMLResponse, JSONResponse
-from main import IronNestShell
+# from main import IronNestShell
+from webui import IronNestShell
 import io
 from contextlib import redirect_stdout
 
-with open("./cdu_webui/cdu_full.html") as f:
+with open("./cdu_webui/cdu.html") as f:
     MAINPAGE = f.read()
 
 app = FastAPI()
 
 ironnest = IronNestShell()
-
 def get_shell(sessionId) -> IronNestShell:
     return ironnest
 
